@@ -12,7 +12,9 @@
   "dependencies": {
     "@contentstack/ui-extensions-sdk": "^2.2.3",
     "@contentstack/venus-components": "^2.1.0",
+    "@fluentui/react-window-provider": "^2.2.15",
     "@fontsource/inter": "^5.0.8",
+    "@react-hook/latest": "^1.0.3",
     "contentstack": "^3.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
