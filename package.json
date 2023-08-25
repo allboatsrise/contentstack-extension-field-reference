@@ -1,7 +1,6 @@
 {
-  "name": "contentstack-extension-field-reference",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@allboatsrise/contentstack-extension-field-reference",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
