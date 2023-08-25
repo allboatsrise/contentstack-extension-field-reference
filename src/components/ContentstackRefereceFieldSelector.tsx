@@ -1,35 +1,44 @@
 import React, { useMemo, useState } from "react";
-import { InfiniteScrollTable as InfiniteScrollTableBase, Notification } from "@contentstack/venus-components";
+import { InfiniteScrollTable as InfiniteScrollTableBase, Notification as BaseNotification } from "@contentstack/venus-components";
 import Contentstack from 'contentstack'
 import { TableProps } from "@contentstack/venus-components/build/components/Table/types";
+import { NotificationItemProps } from "@contentstack/venus-components/build/components/Notification/Notification";
 
 const InfiniteScrollTable = InfiniteScrollTableBase as React.FC<TableProps>
+const Notification = BaseNotification as React.FC<NotificationItemProps>
 
+type Props = {
+  query: Contentstack.Query
+  queryColumns: Array<{
+    name: string;
+    id: string;
+  }>
+  onReferenceSelected: (reference: {uid: string, [x: string]: unknown}) => void
+}
 
-export const ContentstackReferenceFieldSelector: React.FC = () => {
+export const ContentstackReferenceFieldSelector: React.FC<Props> = ({query, queryColumns, onReferenceSelected}) => {
   const [data, updateData] = useState([])
   const [totalCounts, updateTotalCounts] = useState(0)
   const [loading, updateLoading] = useState(false)
-
-  const query = useMemo(() => {
-    const stack = Contentstack.Stack({
-      api_key: import.meta.env.VITE_CONTENTSTACK_STACK_API_KEY,
-      delivery_token: import.meta.env.VITE_CONTENTSTACK_DELIVERY_TOKEN,
-      environment: import.meta.env.VITE_CONTENTSTACK_ENVIRONMENT,
-      branch: import.meta.env.VITE_CONTENTSTACK_BRANCH
-    })
-    const query = stack.ContentType('Blog_Article').Query()
-    return query
-  }, [])
   
   const fetchData: TableProps['fetchTableData'] = async ({ sortBy, searchText, skip, limit }) => {
-    console.log(sortBy, searchText)
     updateLoading(true)
 
     try {
-      const [entries, total] = await query
-        // .regex('title', searchText, 'i')
-        // .ascending(sortBy)
+      let narrowedQuery = query
+      if (searchText) {
+        narrowedQuery = narrowedQuery.regex(queryColumns[0].id, searchText, 'i')
+      }
+
+      if (sortBy) {
+        if (sortBy.sortingDirection === 'desc') {
+          narrowedQuery = narrowedQuery.descending(sortBy.id)
+        } else {
+          narrowedQuery = narrowedQuery.ascending(sortBy.id)
+        }
+      }
+
+      const [entries, total] = await narrowedQuery
         .skip(skip)
         .limit(limit)
         .includeCount()
@@ -40,16 +49,11 @@ export const ContentstackReferenceFieldSelector: React.FC = () => {
       updateTotalCounts(total)
     } catch (error) {
       Notification({
-        displayContent: { error: error },
-        // notifyProps: {
-          
-        //   hideProgressBar: args.hideProgressBar,
-        //   position: args.position,
-        //   autoClose: args.autoClose,
-        //   transition: args.transition,
-        //   closeButton: args.closeButton
-        // },
-        type: 'error'
+        type: 'error',
+        notificationContent: {
+          text: 'Custom Reference Field Error',
+          description: (error instanceof Error) ? error.message : 'Failed to load data - unknown error occurred',
+        }
       })
     } finally {
       updateLoading(false)
@@ -57,49 +61,41 @@ export const ContentstackReferenceFieldSelector: React.FC = () => {
   }
   
   const columns = useMemo<TableProps['columns']>(
-    () => [
-      {
-        Header: 'Title',
-        id: 'title',
-        accessor: (data: {title: string}) => {
-          return <div className="content-title"> {data.title} </div>
-        },
-        // default: true,
-        addToColumnSelector: true
-      },
-      {
-        Header: 'Unique UID',
-        accessor: 'uuid',
-        default: false,
-        addToColumnSelector: true,
-        cssClass: 'uidCustomClass'
-      },
-    ],
-    []
+    () => queryColumns.map(({id, name}, index) => ({
+      Header: name,
+      id,
+      accessor: id,
+      columnWidthMultiplier: index === 0 ? 3 : 1,
+    })),
+    [queryColumns]
   )
   
   return (
+    <div style={{
+      marginTop: "-7px"
+    }}>
     <InfiniteScrollTable
       data={data}
       columns={columns}
-      uniqueKey={'uid'}
+      uniqueKey="uid"
       loading={loading}
       totalCounts={totalCounts}
-      minBatchSizeToFetch={30}
-      initialSortBy={[{ id: 'age', desc: false }]}
+      minBatchSizeToFetch={100}
+      initialSortBy={[{ id: queryColumns[queryColumns.length - 1].id, desc: true }]}
       columnSelector={false}
       searchPlaceholder="Search"
       canSearch
       canRefresh
       tableHeight={500}
-      rowPerPageOptions={[30, 50, 100]}
+      rowPerPageOptions={[10, 30, 50, 100]}
       fetchTableData={fetchData}
-      isResizable
+      itemSize={40}
       v2Features={{
         "pagination": true,
         "isNewEmptyState": true
       }}
-      onRowClick={(...args) => console.log(args)}
+      onRowClick={onReferenceSelected}
     />
+    </div>
   )
 }
