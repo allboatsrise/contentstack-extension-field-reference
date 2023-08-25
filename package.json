@@ -1,14 +1,22 @@
 {
   "name": "@allboatsrise/contentstack-extension-field-reference",
+  "author": "All Boats Rise Inc.",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "description": "Contentstack custom field for adding selecting entry references from other stacks.",
+  "homepage": "https://github.com/allboatsrise/contentstack-extension-field-reference",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "files": [
+    "/dist/**/*",
+    "/package.json",
+    "/README.md"
+  ],
   "dependencies": {
     "@contentstack/ui-extensions-sdk": "^2.2.3",
     "@contentstack/venus-components": "^2.1.0",
