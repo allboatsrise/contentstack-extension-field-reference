@@ -37,7 +37,25 @@ export const ContentstackReferenceField: React.FC<Props> = ({query, queryColumns
           <ContentstackReferenceFieldSelector query={query} queryColumns={queryColumns} onReferenceSelected={(reference) => {
             onChange({
               uid: reference.uid,
-              fields: Object.fromEntries(queryColumns.map(({id}) => ([id, reference[id]]))) 
+              fields: Object.fromEntries(queryColumns.map(({id}) => {
+                
+                // support targeting nested fields with dot notation
+                // e.g. 'field.nestedField'
+                const keys:string[] = id.split('.');
+                const value = keys.reduce((acc: unknown, key: string) => {
+                  if (acc === null || acc === undefined) {
+                    return;
+                  }
+                  if (typeof acc !== 'object') {
+                    return acc
+                  }                  
+                  return (acc as {[key: string]: unknown})[key];
+                }, {...reference})
+                
+                // Contentstack doesn't allow '.' in the field name, so we replace with '-'
+                const key = id.replace(/\./g, '-');
+                return [key, value]
+              }),) 
             })
             setOpen(false)
           }} />
