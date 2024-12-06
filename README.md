@@ -16,3 +16,4 @@ Override default environment variables in [.env.development](.env.development) b
 
 Entire codebase is compiled into a single html file (`dist/index.html`) via `yarn build` command. The code in the file should be copied/pasted into "Hosting method => Hosted by Contenstack => Extension source code" field. when adding the extension in Contentstack.
 
+test
